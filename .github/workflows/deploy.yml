@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - prod
+      - stage
 
 jobs:
   deploy-test:
@@ -14,13 +14,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup PHP 8.4
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.4
-          tools: composer
-          extensions: mbstring, pdo, mysql
 
       # Setup SSH
       - name: Setup SSH
@@ -34,6 +27,7 @@ jobs:
       - name: Deploy files to TEST server
         run: |
           rsync -avz --delete \
+          --exclude=.env \
           --exclude=storage/ \
           --exclude=public/storage \
           ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/quizlive/test/backend
@@ -57,12 +51,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.4
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.4
-          tools: composer
-
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -73,6 +61,7 @@ jobs:
       - name: Deploy files to PRODUCTION
         run: |
           rsync -avz --delete \
+          --exclude=.env \
           --exclude=storage/ \
           --exclude=public/storage \
           ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/quizlive/prod/backend
