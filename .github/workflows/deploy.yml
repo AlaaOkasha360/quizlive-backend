@@ -1,0 +1,87 @@
+name: Laravel Deploy Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - prod
+
+jobs:
+  deploy-test:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer
+          extensions: mbstring, pdo, mysql
+
+      # Setup SSH
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      # Rsync deploy
+      - name: Deploy files to TEST server
+        run: |
+          rsync -avz --delete \
+          --exclude=storage/ \
+          --exclude=public/storage \
+          ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/quizlive/test/backend
+
+      # Run migrations and commands
+      - name: Run migrations on TEST
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /var/www/quizlive/test/backend
+            php8.4 /usr/local/bin/composer install --no-interaction || exit 1
+            php8.4 artisan migrate --force || exit 1
+            php8.4 artisan queue:restart || exit 1
+          EOF
+
+
+  deploy-production:
+    if: github.ref == 'refs/heads/stage'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Deploy files to PRODUCTION
+        run: |
+          rsync -avz --delete \
+          --exclude=storage/ \
+          --exclude=public/storage \
+          ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }}:/var/www/quizlive/prod/backend
+
+      - name: Run migrations on PRODUCTION
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            cd /var/www/quizlive/prod/backend
+            php8.4 /usr/local/bin/composer install --no-interaction || exit 1
+            php8.4 artisan migrate --force || exit 1
+            php8.4 artisan queue:restart || exit 1
+          EOF
