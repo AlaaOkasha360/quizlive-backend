@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\CompleteProfileRequest;
+use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\SelectInterestsRequest;
 use App\Http\Requests\Auth\SelectRoleRequest;
@@ -29,6 +30,13 @@ class AuthController extends Controller
             'user' => $result['user'],
             'token' => $result['token'],
         ]);
+    }
+
+    public function login(LoginRequest $request): JsonResponse
+    {
+        $result = $this->authService->login($request->validated());
+
+        return ApiResponse::success('Login successful', $result);
     }
 
     /**

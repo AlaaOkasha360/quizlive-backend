@@ -131,4 +131,27 @@ class AuthService
 
         return $user->fresh();
     }
+
+    /**
+     * Authenticate a user with email and password.
+     */
+    public function login(array $data): array
+    {
+        $user = User::where('email', $data['email'])->first();
+
+        if (!$user || !Hash::check($data['password'], $user->password)) {
+            throw new \Illuminate\Validation\ValidationException(
+                validator: validator($data, []),
+                response: \App\Util\ApiResponse::unauthorized('Invalid email or password.')
+            );
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return [
+            'user' => $user,
+            'token' => $token,
+            'is_new' => !$user->isOnboarded(),
+        ];
+    }
 }

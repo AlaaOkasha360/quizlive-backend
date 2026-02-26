@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('auth')->group(function () {
     // Public Routes
     Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
 
     // Email Verification (signed URL — no auth needed)
     Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
