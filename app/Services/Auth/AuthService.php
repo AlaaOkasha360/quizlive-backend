@@ -4,7 +4,6 @@ namespace App\Services\Auth;
 
 use App\Models\User;
 use App\Traits\MediaStorageTrait;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Laravel\Socialite\Facades\Socialite;
@@ -25,8 +24,8 @@ class AuthService
             'signup_step' => 1,
         ]);
 
-        // Fires the Registered event which sends the verification email
-        event(new Registered($user));
+        // Send verification email explicitly to avoid relying on event wiring.
+        $user->sendEmailVerificationNotification();
 
         $token = $user->createToken('auth_token')->plainTextToken;
 

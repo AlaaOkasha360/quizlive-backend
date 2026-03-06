@@ -9,9 +9,9 @@ Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
 
-    // Email Verification (signed URL — no auth needed)
+    // Email Verification (signed URL)
     Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
-        ->middleware(['auth:sanctum', 'signed'])
+        ->middleware(['signed', 'throttle:6,1'])
         ->name('verification.verify');
 
     // Authenticated Routes
