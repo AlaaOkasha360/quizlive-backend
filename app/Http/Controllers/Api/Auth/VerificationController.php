@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 
 class VerificationController extends Controller
 {
-    private const ONBOARDING_URL = 'https://quiz-live.app/onboarding';
+    private const ONBOARDING_URL = config('app.frontend_url') . '/onboarding';
 
     /**
      * Mark the user's email as verified and redirect to frontend.
